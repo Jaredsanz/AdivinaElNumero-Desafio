@@ -23,7 +23,12 @@ class PantallaJuego extends StatefulWidget {
 }
 
 class EstadoPantallaJuego extends State<PantallaJuego> {
-  @override
+  final TextEditingController controladorNumero = TextEditingController();
+  int intentosRestantes = 5;
+  final List<String> nombresNiveles = ['Facil', 'Normal', 'Dificil', 'Extremo'];
+  int nivelActual = 0;
+
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -32,18 +37,64 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
       ),
       body: Padding(
         padding: EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: columnaConBorde('Mayor que'),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controladorNumero,
+                    decoration: InputDecoration(
+                      labelText: 'Numbers',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text('Intentos', style: TextStyle(fontSize: 18)),
+                      Text(
+                        intentosRestantes.toString(),
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: columnaConBorde('Menor que'),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: columnaConBorde('Mayor que'),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: columnaConBorde('Menor que'),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: columnaConBorde('Historial'),
+                ),
+              ],
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: columnaConBorde('Historial'),
+            SizedBox(height: 24),
+            Text(
+              nombresNiveles[nivelActual],
+              style: TextStyle(fontSize: 16),
+            ),
+            Slider(
+              value: nivelActual.toDouble(),
+              min: 0,
+              max: 3,
+              divisions: 3,
+              onChanged: (double valor) {
+                setState(() {
+                  nivelActual = valor.toInt();
+                });
+              },
             ),
           ],
         ),
