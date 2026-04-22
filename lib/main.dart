@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'modelos/nivel.dart';
 
 void main() {
   runApp(MiApp());
@@ -24,12 +25,13 @@ class PantallaJuego extends StatefulWidget {
 
 class EstadoPantallaJuego extends State<PantallaJuego> {
   final TextEditingController controladorNumero = TextEditingController();
-  int intentosRestantes = 5;
-  final List<String> nombresNiveles = ['Facil', 'Normal', 'Dificil', 'Extremo'];
   int nivelActual = 0;
+  late int intentosRestantes = niveles[nivelActual].intentosMaximos;
 
-@override
+  @override
   Widget build(BuildContext context) {
+    Nivel nivel = niveles[nivelActual];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Adivina el Numero'),
@@ -82,7 +84,7 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
             ),
             SizedBox(height: 24),
             Text(
-              nombresNiveles[nivelActual],
+              nivel.nombre,
               style: TextStyle(fontSize: 16),
             ),
             Slider(
@@ -93,6 +95,7 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
               onChanged: (double valor) {
                 setState(() {
                   nivelActual = valor.toInt();
+                  intentosRestantes = niveles[nivelActual].intentosMaximos;
                 });
               },
             ),
