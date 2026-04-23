@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math';
 import 'modelos/nivel.dart';
 
@@ -30,16 +31,19 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
   late int intentosRestantes = niveles[nivelActual].intentosMaximos;
   late int numeroSecreto = generarNumeroSecreto();
   String mensajeError = '';
+  List<int> historial = [];
+  List<bool> historialAcertado = [];
+  int? numeroMayorQue;
+  int? numeroMenorQue;
+  bool juegoTerminado = false;
+  bool gano = false;
 
   @override
   Widget build(BuildContext context) {
     Nivel nivel = niveles[nivelActual];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Adivina el Numero (secreto: $numeroSecreto)'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text('Adivina el Numero'), centerTitle: true),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -49,6 +53,9 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
                 Expanded(
                   child: TextField(
                     controller: controladorNumero,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onSubmitted: (valor) => procesarIntento(),
                     decoration: InputDecoration(
                       labelText: 'Numbers',
                       border: OutlineInputBorder(),
@@ -92,11 +99,27 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
               },
             ),
             SizedBox(height: 16),
-            ElevatedButton(onPressed: procesarIntento, child: Text('Adivinar')),
+            ElevatedButton(
+              onPressed: procesarIntento,
+              child: Text(juegoTerminado ? 'Jugar de nuevo' : 'Adivinar'),
+            ),
             if (mensajeError.isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(top: 8),
                 child: Text(mensajeError, style: TextStyle(color: Colors.red)),
+              ),
+            if (juegoTerminado)
+              Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: Text(
+                  gano
+                      ? '¡Ganaste! El numero era $numeroSecreto'
+                      : 'Perdiste. El numero era $numeroSecreto',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: gano ? Colors.green : Colors.red,
+                  ),
+                ),
               ),
           ],
         ),
@@ -115,9 +138,40 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
       child: Column(
         children: [
           Text(titulo, style: TextStyle(fontSize: 18, color: Colors.white)),
+          SizedBox(height: 8),
+          Expanded(child: contenidoColumna(titulo)),
         ],
       ),
     );
+  }
+
+  Widget contenidoColumna(String titulo) {
+    if (titulo == 'Mayor que' && numeroMayorQue != null) {
+      return Center(
+        child: Text(numeroMayorQue.toString(), style: TextStyle(fontSize: 24)),
+      );
+    }
+    if (titulo == 'Menor que' && numeroMenorQue != null) {
+      return Center(
+        child: Text(numeroMenorQue.toString(), style: TextStyle(fontSize: 24)),
+      );
+    }
+    if (titulo == 'Historial') {
+      return SingleChildScrollView(
+        child: Column(
+          children: List.generate(historial.length, (i) {
+            return Text(
+              historial[i].toString(),
+              style: TextStyle(
+                fontSize: 20,
+                color: historialAcertado[i] ? Colors.green : Colors.red,
+              ),
+            );
+          }),
+        ),
+      );
+    }
+    return SizedBox();
   }
 
   int generarNumeroSecreto() {
@@ -132,10 +186,21 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
       intentosRestantes = niveles[nivelActual].intentosMaximos;
       controladorNumero.clear();
       mensajeError = '';
+      historial = [];
+      historialAcertado = [];
+      numeroMayorQue = null;
+      numeroMenorQue = null;
+      juegoTerminado = false;
+      gano = false;
     });
   }
 
   void procesarIntento() {
+    if (juegoTerminado) {
+      reiniciarJuego();
+      return;
+    }
+
     String texto = controladorNumero.text;
     int? numero = int.tryParse(texto);
 
@@ -158,6 +223,30 @@ class EstadoPantallaJuego extends State<PantallaJuego> {
       mensajeError = '';
       intentosRestantes--;
       controladorNumero.clear();
+
+      bool acerto = numero == numeroSecreto;
+      historial.add(numero);
+      historialAcertado.add(acerto);
+
+      if (acerto) {
+        juegoTerminado = true;
+        gano = true;
+      } else {
+        if (numero < numeroSecreto) {
+          if (numeroMayorQue == null || numero > numeroMayorQue!) {
+            numeroMayorQue = numero;
+          }
+        } else {
+          if (numeroMenorQue == null || numero < numeroMenorQue!) {
+            numeroMenorQue = numero;
+          }
+        }
+
+        if (intentosRestantes == 0) {
+          juegoTerminado = true;
+          gano = false;
+        }
+      }
     });
   }
 }
